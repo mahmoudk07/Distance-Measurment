@@ -1,0 +1,32 @@
+/************************************************
+* [File Name] : ultrasonic.c
+* [Description]: Source File of ultrasonic sensor Driver
+* [Author]: Mahmoud Khaled
+* [Data]: 9/10/2022
+************************************************/
+#include "ultrasonic.h"
+#include "icu.h"
+#include "gpio.h"
+
+/*******************************************************************
+*                        Function Definition                       *
+*******************************************************************/
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_init
+* [Description]: Initialize ICU Driver and setCallback Function
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_init(void){
+	Icu_ConfigType Icu_initialization = {2,Rising};
+	ICU_init(&Icu_initialization);
+	GPIO_setupPinDirection(PORTB_ID, PIN5_ID, PIN_OUTPUT);
+}
+
+
+
+
+
+
+

@@ -1,0 +1,85 @@
+/************************************************
+* [File Name] : ultrasonic.c
+* [Description]: Source File of ultrasonic sensor Driver
+* [Author]: Mahmoud Khaled
+* [Data]: 9/10/2022
+************************************************/
+#include "ultrasonic.h"
+#include "icu.h"
+#include "gpio.h"
+#include <util/delay.h>
+/*******************************************************************
+*                        Global Variables                          *
+*******************************************************************/
+static volatile uint8 g_edge_count = 0;
+static volatile uint16 g_high_time = 0;
+/*******************************************************************
+*                        Function Definition                       *
+*******************************************************************/
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_init
+* [Description]: Initialize ICU Driver and setCallback Function
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_init(void){
+	/* Initialize ICU Driver with Detection edge and Specific Clock */
+	Icu_ConfigType Icu_initialization = {2,Rising};
+	ICU_init(&Icu_initialization);
+	/* Set up callback function */
+	ICU_setCallback(Ultrasonic_edgeProcessing);
+	/* PIN 5 in PORTB is defined to be output PIN */
+	GPIO_setupPinDirection(PORTB_ID, PIN5_ID, PIN_OUTPUT);
+	GPIO_writePin(PORTB_ID, PIN5_ID, LOGIC_Low);
+}
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_Trigger
+* [Description]: Send Trigger Pulse to Ultrasonic Sensor
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_Trigger(void){
+	/* Send a Trigger Pulse to Trigger Pin That will make Sensor Send 40us Pulse to hit object */
+	GPIO_writePin(PORTB_ID, PIN5_ID, LOGIC_High);
+	_delay_us(Ultrasonic_Trigger_Pulse);
+	GPIO_writePin(PORTB_ID, PIN5_ID, LOGIC_Low);
+}
+/*******************************************************************
+* [Function Name]: Ultrasonic_readDistance
+* [Description]: ICU Start Timer when Pulse sends to Ultrasonic Sensor
+*
+* [Arguments]: No Arguments
+* [Returns]: Returns The Distance Measurement
+********************************************************************/
+uint16 Ultrasonic_readDistance(void){
+	uint16 distance = 0;
+	Ultrasonic_Trigger();
+	distance = g_high_time * 0.017;
+	return distance;
+}
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_edgeProcessing
+* [Description]: Initialize ICU Driver and setCallback Function
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_edgeProcessing(void){
+	g_edge_count++;
+	if(g_edge_count == 1){
+		ICU_clearTimerValue();
+		ICU_setEdgeDetectionType(Falling);
+	}
+	else if(g_edge_count == 2){
+		g_high_time = ICU_getInputCaptureValue();
+		ICU_clearTimerValue();
+		ICU_setEdgeDetectionType(Rising);
+	}
+}
+
+
+
+
+

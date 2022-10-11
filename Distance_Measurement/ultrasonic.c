@@ -1,0 +1,104 @@
+/************************************************
+* [File Name] : ultrasonic.c
+* [Description]: Source File of ultrasonic sensor Driver
+* [Author]: Mahmoud Khaled
+* [Data]: 9/10/2022
+************************************************/
+#include "ultrasonic.h"
+#include "icu.h"
+#include "gpio.h"
+#include <util/delay.h>
+/*******************************************************************
+*                        Global Variables                          *
+*******************************************************************/
+static volatile uint8 g_edge_count = 0;
+static volatile uint16 g_high_time = 0;
+/*******************************************************************
+*                        Function Definition                       *
+*******************************************************************/
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_init
+* [Description]: Initialize ICU Driver and setCallback Function
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_init(void){
+	/* Initialize ICU Driver with Detection edge and Specific Clock */
+	Icu_ConfigType Icu_initialization = {2,Rising};
+	ICU_init(&Icu_initialization);
+	/* Set up callback function */
+	ICU_setCallback(Ultrasonic_edgeProcessing);
+	/* PIN 5 in PORTB is defined to be output PIN */
+	GPIO_setupPinDirection(Ultrasonic_PORT_ID, Ultrasonic_Trigger_PIN_ID, PIN_OUTPUT);
+	GPIO_writePin(Ultrasonic_PORT_ID, Ultrasonic_Trigger_PIN_ID, LOGIC_Low);
+}
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_Trigger
+* [Description]: Send Trigger Pulse to Ultrasonic Sensor
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_Trigger(void){
+	/* Send a Trigger Pulse to Trigger Pin That will make Sensor Send 40us Pulse to hit object */
+	GPIO_writePin(Ultrasonic_PORT_ID, Ultrasonic_Trigger_PIN_ID, LOGIC_High);
+	_delay_us(Ultrasonic_Trigger_Pulse);
+	GPIO_writePin(Ultrasonic_PORT_ID, Ultrasonic_Trigger_PIN_ID, LOGIC_Low);
+}
+/*******************************************************************
+* [Function Name]: Ultrasonic_readDistance
+* [Description]: ICU Start Timer when Pulse sends to Ultrasonic Sensor
+*
+* [Arguments]: No Arguments
+* [Returns]: Returns The Distance Measurement
+********************************************************************/
+uint16 Ultrasonic_readDistance(void){
+	uint16 distance = 0;
+	/* Send a Trigger Pulse to Ultrasonic Sensor to start send echo wave to object */
+	Ultrasonic_Trigger();
+	/*****************************************************
+	* Distance = Speed * Time
+	* Speed = Sound Velocity = 340 m/s --> 340000 cm/s
+	* Time = Time calculated by ICU when Trigger Pulse send to Sensor ---> wait until Rising edge at Echo Pin
+	* Icu will detect the next falling edge to calculate high time of Echo wave and thus --> this is Time
+	* Echo will have falling edge when the wave return back to sensor so, The Distance Multiplied
+	* Distance = (Speed * Time) / 2
+	* in This case F_CPU = 8Mhz & ICU Pre-scaler = F_CUP / 8 = 1Mhz
+	* Distance = (340000 / 2) * Time * 10^-6
+	*          = 17000 * Time * 10^-6 = 0.017 * Time (cm)
+	*****************************************************/
+	distance = g_high_time * 0.017;
+	return distance;
+}
+
+/*******************************************************************
+* [Function Name]: Ultrasonic_edgeProcessing
+* [Description]: Initialize ICU Driver and setCallback Function
+* [Arguments]: No Arguments
+* [Returns]: No Return
+********************************************************************/
+void Ultrasonic_edgeProcessing(void){
+	g_edge_count++;
+	/* when g_edge_count become 1 --> Rising edge detected */
+	if(g_edge_count == 1){
+		/* Clear Timer value to start detect falling edge */
+		ICU_clearTimerValue();
+		/* set falling edge to be detected by ICU */
+		ICU_setEdgeDetectionType(Falling);
+	}
+	else if(g_edge_count == 2){
+		/* Store value of Time from start rising edge to detect falling edge (High_Time) */
+		g_high_time = ICU_getInputCaptureValue();
+		/* clear timer value to start again */
+		ICU_clearTimerValue();
+		/* set Rising edge to be detected by ICU */
+		ICU_setEdgeDetectionType(Rising);
+		g_edge_count = 0;
+	}
+}
+
+
+
+
+

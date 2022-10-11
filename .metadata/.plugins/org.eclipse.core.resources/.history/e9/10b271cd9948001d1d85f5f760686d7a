@@ -1,0 +1,37 @@
+/************************************************
+* [File Name] : Application.c
+* [Description]: Source File of Application
+* [Author]: Mahmoud Khaled
+* [Data]: 9/10/2022
+************************************************/
+#include "lcd.h"
+#include "ultrasonic.h"
+#include "avr/io.h"
+int main(){
+	/* Enable Global Interrupt  (I-bit) */
+	SREG |= (1 << 7);
+	/* Initialize LCD Driver */
+	LCD_init();
+	/* Initialize ultra-sonic sensor */
+	Ultrasonic_init();
+	uint16 Distance = 0;
+	/* Display String on LCD Screen that will be displayed All Program execution */
+	LCD_displayString("Distance=    cm");
+	while(1){
+		Distance= Ultrasonic_readDistance();
+		if(temp >= 100)
+				{
+					// It will be Printed Normally on LCD Display //
+					LCD_integerToString(temp);
+				}
+				else
+				{
+					// If Number Consists of 2 Digits //
+					// If Sensor Reach to value of 3 digits and after some duration it return back to read value of 2-digits //
+					// Here digit-3 will still Printed on LCD Screen so, To avoid that it will Print a space instead of that Digit
+					LCD_integerToString(temp);
+					/* In case the digital value is two or one digits print space in the next digit place */
+					LCD_displayCharacter(' ');
+				}
+	};
+}

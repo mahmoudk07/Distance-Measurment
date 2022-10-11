@@ -1,0 +1,23 @@
+/************************************************
+* [File Name] : Application.c
+* [Description]: Source File of Application
+* [Author]: Mahmoud Khaled
+* [Data]: 9/10/2022
+************************************************/
+#include "lcd.h"
+#include "ultrasonic.h"
+#include "avr/io.h"
+int main(){
+	/* Enable Global Interrupt  (I-bit) */
+	SREG |= (1 << 7);
+	/* Initialize LCD Driver */
+	LCD_init();
+	/* Initialize ultra-sonic sensor */
+	Ultrasonic_init();
+	uint16 Distance = 0;
+	/* Display String on LCD Screen that will be displayed All Program execution */
+	LCD_displayString("Distance=    cm");
+	while(1){
+
+	};
+}

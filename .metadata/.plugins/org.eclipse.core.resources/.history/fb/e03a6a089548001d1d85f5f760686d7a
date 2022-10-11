@@ -1,0 +1,16 @@
+/************************************************
+* [File Name] : Application.c
+* [Description]: Source File of Application
+* [Author]: Mahmoud Khaled
+* [Data]: 9/10/2022
+************************************************/
+#include "lcd.h"
+#include "ultrasonic.h"
+#include "avr/io.h"
+int main(){
+	SREG |= (1 << 7);
+	LCD_init();
+	Ultrasonic_init();
+
+	while(1){};
+}
